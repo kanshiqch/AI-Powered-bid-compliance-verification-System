@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeM Bid Compliance & GNN Fraud Detection Platform</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Google Fonts & D3.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+  <div class="app-container">
+    <!-- Navigation Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">🛡️</div>
+        <div>
+          <h1>AI GeM Compliance & GNN Fraud Platform</h1>
+          <p class="subtitle">Integrated Tender Clause NLP Auditor & Graph Neural Fraud Engine</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-indicator">
+          <span class="pulse-dot"></span>
+          <span id="api-status">API Connected</span>
+        </div>
+        <button id="btn-reseed" class="btn btn-secondary">
+          🔄 Re-Run AI Audit Pipeline
+        </button>
+        <div id="user-badge" class="user-badge" style="display: none;">
+          <span class="user-avatar">👤</span>
+          <span id="user-display-name">Official</span>
+          <button id="btn-logout" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">🚪 Logout</button>
+        </div>
+      </div>
+    </header>
+    <!-- Portal Selection Bar -->
+    <nav class="portal-selector-bar">
+      <button id="tab-govt" class="portal-tab active">
+        <span class="tab-icon">🛡️</span> Government Authority Workspace
+      </button>
+      <button id="tab-vendor" class="portal-tab">
+        <span class="tab-icon">💼</span> Vendor Self-Audit Workspace
+      </button>
+    </nav>
+
+    <!-- Government Authority Dashboard View -->
+    <div id="govt-dashboard" class="portal-view active">
+      <!-- Government Auditing Guidance (Collapsible) -->
+      <div class="card guidance-card" id="gov-guidance-panel" style="margin-bottom: 1rem;">
+        <div class="guidance-header" onclick="toggleGuidance('gov-guidance-content')">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">📖</span>
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">Government Workspace Auditing Guidelines</h3>
+          </div>
+          <span class="toggle-arrow" id="gov-guidance-arrow" style="font-size: 0.8rem; transition: transform 0.2s ease;">▼</span>
+        </div>
+        <div class="guidance-content" id="gov-guidance-content" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 0.75rem;">
+          <div class="guidance-grid">
+            <div class="guidance-step">
+              <span class="step-num">1</span>
+              <h4>Evaluate Bids</h4>
+              <p>Review the automated NLP-extracted scorecards in the table. Green indicates compliant bids, Yellow requires inspection, and Red represents major threshold violations.</p>
+            </div>
+            <div class="guidance-step">
+              <span class="step-num">2</span>
+              <h4>GNN Scan</h4>
+              <p>Examine the Heterogeneous Knowledge Graph on the right to audit suspicious cartel ring behaviors, such as sharing director names, IP addresses, or bank accounts.</p>
+            </div>
+            <div class="guidance-step">
+              <span class="step-num">3</span>
+              <h4>Select & Award</h4>
+              <p>Click "Select" on the winning compliant bid. The platform will dynamically locate the bidder's registered account and email a selection notification.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-Workspace Navigation Bar -->
+      <div class="sub-nav-bar">
+        <button id="subtab-overview" class="subtab-btn active">📊 Bid Overview</button>
+        <button id="subtab-checklist" class="subtab-btn">🔍 Checklist & Forensics</button>
+        <button id="subtab-collusion" class="subtab-btn">🕸️ Collusion & Plagiarism</button>
+        <button id="subtab-recommendations" class="subtab-btn">🏆 AI Recommendations</button>
+        <button id="subtab-alerts" class="subtab-btn">🔔 Expiry Alerts <span id="alert-count-badge" class="alert-count-badge">0</span></button>
+      </div>
+
+      <!-- Panel 1: Overview & Metrics -->
+      <div id="panel-overview" class="subtab-panel active">
+        <!-- Stat Metric Cards -->
+        <section class="metrics-grid">
+          <div class="card metric-card">
+            <div class="metric-icon blue">📄</div>
+            <div class="metric-data">
+              <span class="metric-value" id="stat-total">0</span>
+              <span class="metric-label">Total Bids Processed</span>
+            </div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-icon green">✅</div>
+            <div class="metric-data">
+              <span class="metric-value" id="stat-compliant">0</span>
+              <span class="metric-label">Compliant Bids (Green)</span>
+            </div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-icon yellow">⚠️</div>
+            <div class="metric-data">
+              <span class="metric-value" id="stat-review">0</span>
+              <span class="metric-label">Needs Review (Yellow)</span>
+            </div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-icon red">⛔</div>
+            <div class="metric-data">
+              <span class="metric-value" id="stat-rejected">0</span>
+              <span class="metric-label">Disqualified Bids (Red)</span>
+            </div>
+          </div>
+
+          <div class="card metric-card warning-glow">
+            <div class="metric-icon purple">🕸️</div>
+            <div class="metric-data">
+              <span class="metric-value" id="stat-cartels">0</span>
+              <span class="metric-label">GNN Flagged Cartels</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Main Content (Overview Grid) -->
+        <main class="main-content-overview">
+          <div class="card table-card-full" style="grid-column: span 12;">
+            <div class="panel-header">
+              <h2>📊 Bid Compliance & Audit Scorecards</h2>
+              <span class="badge badge-info">NLP & OCR Verified</span>
+            </div>
+            <div class="table-container">
+              <table class="audit-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Bid ID</th>
+                    <th>Vendor Name</th>
+                    <th>Score</th>
+                    <th>GSTIN Audit</th>
+                    <th>Turnover & ISO</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bids-table-body">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- Panel 2: Smart Checklist & Forensics -->
+      <div id="panel-checklist" class="subtab-panel">
+        <main class="main-content">
+          <!-- Left Panel: Smart Checklist Checklist -->
+          <section class="content-panel left-panel">
+            <div class="card checklist-full-card">
+              <div class="panel-header" style="margin-bottom:0.75rem;">
+                <h2>🔍 Bid Document Smart Verification Checklist</h2>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <span style="font-size:0.8rem; color:var(--text-muted);">Select Bid:</span>
+                  <select id="checklist-bid-selector" class="form-input select-input" style="padding:0.2rem 0.5rem; font-size:0.8rem; width:120px;" onchange="loadSmartChecklist()">
+                    <!-- Options populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              <p class="section-desc">Itemized clause checkpoints. Green indicates validated matching, and yellow/red requires override audit.</p>
+              
+              <div class="itemized-checklist-container" id="govt-smart-checklist-container">
+                <!-- Checklist items list populated via JS -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Right Panel: PDF Metadata Forensics -->
+          <section class="content-panel right-panel">
+            <div class="card forensics-card">
+              <div class="panel-header">
+                <h2>🔬 PDF Metadata Timeline & Forgery Scan</h2>
+                <span class="badge badge-danger">Forensic Check</span>
+              </div>
+              <p class="section-desc">Analysis of PDF binary files, hash properties, and metadata dates:</p>
+              
+              <div class="forensics-report-box" id="forensics-report-box">
+                <!-- Forensics scan items populated dynamically -->
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- Panel 3: Collusion & Plagiarism Networks -->
+      <div id="panel-collusion" class="subtab-panel">
+        <main class="main-content">
+          <!-- Left Panel: Plagiarism and Duplicate Bids -->
+          <section class="content-panel left-panel">
+            <div class="card plagiarism-card">
+              <div class="panel-header">
+                <h2>📑 Duplicate Bid & Plagiarism Tracker</h2>
+                <span class="badge badge-warning">Bid Plagiarism</span>
+              </div>
+              <p class="section-desc">Bids containing identical file hashes or submission timeline signatures:</p>
+              <div class="table-container">
+                <table class="audit-table">
+                  <thead>
+                    <tr>
+                      <th>Bid 1</th>
+                      <th>Bid 2</th>
+                      <th>Match Score</th>
+                      <th>Indicator Type</th>
+                    </tr>
+                  </thead>
+                  <tbody id="duplicate-bids-table-body">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="cartel-alerts" id="cartel-alerts-container" style="margin-top: 1rem;">
+              <!-- Dynamically populated -->
+            </div>
+          </section>
+
+          <!-- Right Panel: GNN Graph -->
+          <section class="content-panel right-panel">
+            <div class="card graph-card">
+              <div class="panel-header">
+                <div>
+                  <h2>🕸️ GNN Collusion Knowledge Graph</h2>
+                  <p class="subtitle">Multi-relational Heterogeneous Graph (Vendors, Directors, IPs, Bank Accounts)</p>
+                </div>
+                <div class="graph-legend" style="margin-top:0.5rem;">
+                  <span class="legend-item"><span class="color-box vendor"></span> Vendor</span>
+                  <span class="legend-item"><span class="color-box director"></span> Director</span>
+                  <span class="legend-item"><span class="color-box ip"></span> IP Addr</span>
+                  <span class="legend-item"><span class="color-box bank"></span> Bank Acc</span>
+                  <span class="legend-item"><span class="color-box cartel"></span> Cartel Flag</span>
+                </div>
+              </div>
+
+              <div id="gnn-graph-container">
+                <svg id="gnn-svg" width="100%" height="450"></svg>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- Panel 4: AI Recommendations Ranking Leaderboard -->
+      <div id="panel-recommendations" class="subtab-panel">
+        <div class="card recommendation-deck">
+          <div class="panel-header">
+            <h2>🏆 AI Recommender Leaderboard</h2>
+            <span class="badge badge-info">Optimal Procurement Rank</span>
+          </div>
+          <p class="section-desc">Weighted ranking of compliant bids using a multi-criteria model (40% Compliance, 30% Experience, 20% Price, 10% Turnover):</p>
+          
+          <div class="table-container">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Vendor Details</th>
+                  <th>Bid Price</th>
+                  <th>Compliance & Risk</th>
+                  <th>Recommendation Score</th>
+                  <th>AI Action Rationale</th>
+                </tr>
+              </thead>
+              <tbody id="recommendations-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 5: Deadline & Expiry Alerts -->
+      <div id="panel-alerts" class="subtab-panel">
+        <div class="card alerts-deck">
+          <div class="panel-header">
+            <h2>🔔 Deadline & Expiry Ticker Center</h2>
+            <span class="badge badge-warning">System Tickers</span>
+          </div>
+          <p class="section-desc">Real-time alerts tracking ISO certification expiries, tax compliance validity, and tender timelines:</p>
+          
+          <div class="expiry-alerts-list" id="expiry-alerts-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Sample Ingestion & Logs Section (Common to Gov workspace bottom) -->
+      <section class="document-studio-history-grid" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem;">
+        <div class="card document-studio" style="grid-column: span 6;">
+          <div class="panel-header">
+            <h3>📑 Synthetic PDF Document Ingestion Studio</h3>
+          </div>
+          <p class="section-desc">Click any test PDF document generated by the synthetic document engine to inspect or download:</p>
+          <div class="doc-chips" id="doc-chips-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="card selection-history-card" style="grid-column: span 6;">
+          <div class="panel-header">
+            <h2>📜 Procurement Award Selection Logs</h2>
+          </div>
+          <div class="table-container" style="max-height: 180px; overflow-y: auto;">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Bid ID</th>
+                  <th>Vendor</th>
+                  <th>Officer</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="selections-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Chatbot Widget -->
+      <div class="chat-widget-container" id="chat-widget">
+        <button class="chat-toggle" onclick="toggleChat()">💬 AI Auditor Assistant</button>
+        <div class="chat-window" id="chat-window" style="display:none;">
+          <div class="chat-header">AI Audit Assistant <span onclick="toggleChat()">×</span></div>
+          <div class="chat-messages" id="chat-messages">
+             <div class="bot-msg">Hello! Ask me about any tender compliance or forensic data.</div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Query clauses...">
+            <button onclick="sendChatMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor Self-Audit Dashboard View -->
+    <div id="vendor-dashboard" class="portal-view">
+      <main class="main-content">
+        <!-- Left Column: Specs, Upload, Session History -->
+        <section class="content-panel left-panel">
+          <!-- Vendor Auditing Guidance (Collapsible) -->
+          <div class="card guidance-card" id="vendor-guidance-panel" style="margin-bottom: 0;">
+            <div class="guidance-header" onclick="toggleGuidance('vendor-guidance-content')">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.2rem;">📖</span>
+                <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">Vendor Self-Audit Guide</h3>
+              </div>
+              <span class="toggle-arrow" id="vendor-guidance-arrow" style="font-size: 0.8rem; transition: transform 0.2s ease;">▼</span>
+            </div>
+            <div class="guidance-content" id="vendor-guidance-content" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color); margin-top: 0.75rem;">
+              <div class="guidance-grid">
+                <div class="guidance-step">
+                  <span class="step-num">1</span>
+                  <h4>Check Eligibility</h4>
+                  <p>Read the Active Tender Eligibility Rules card below. Prepare your technical proposals according to these clauses.</p>
+                </div>
+                <div class="guidance-step">
+                  <span class="step-num">2</span>
+                  <h4>Upload Draft</h4>
+                  <p>Drag and drop or browse your bid PDF. The AI pipeline will automatically extract variables using OCR and check GNN relations.</p>
+                </div>
+                <div class="guidance-step">
+                  <span class="step-num">3</span>
+                  <h4>Resolve Flags</h4>
+                  <p>Check your scorecard and recommendations. If rejected (Red) or marked Review (Yellow), correct errors in your bid documents and re-upload.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Tender Rules -->
+          <div class="card tender-spec-card">
+            <div class="panel-header">
+              <h2>📋 Active Tender Eligibility Rules</h2>
+              <span class="badge badge-info">Tender ID: GEM/2026/B/891204</span>
+            </div>
+            <p class="section-desc">Verify your compliance criteria before final bid submission:</p>
+            <div class="criteria-list">
+              <div class="criteria-item">
+                <span class="criteria-bullet">🔹</span>
+                <div>
+                  <strong>GST Registration:</strong> Active GSTIN matching State Codes 27 (Maharashtra), 07 (Delhi), 29 (Karnataka), or 09 (Uttar Pradesh)
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-bullet">🔹</span>
+                <div>
+                  <strong>PAN Card:</strong> Must be present and valid
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-bullet">🔹</span>
+                <div>
+                  <strong>Minimum Turnover:</strong> Average annual turnover of ₹50.0 Lakhs or above
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-bullet">🔹</span>
+                <div>
+                  <strong>Experience:</strong> Minimum 3 years of enterprise hardware operations
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-bullet">🔹</span>
+                <div>
+                  <strong>Certifications:</strong> Valid ISO 9001:2015 registration
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+              <a href="/sample-pdfs/Tender_GeM_2026_Hardware.pdf" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none; display:inline-block; text-align:center;">📄 View Official Tender PDF</a>
+            </div>
+          </div>
+
+          <!-- Bid Document Upload/Audit Console -->
+          <div class="card upload-card">
+            <div class="panel-header">
+              <h2>📤 Bid Self-Audit Upload Console</h2>
+            </div>
+            <p class="section-desc">Upload your draft bid document in PDF format to run the AI compliance verification check instantly.</p>
+            
+            <div class="upload-dropzone" id="upload-dropzone">
+              <div class="upload-icon">📄</div>
+              <h3>Drag & Drop Bid PDF</h3>
+              <p>or click to browse local files</p>
+              <input type="file" id="bid-file-input" accept="application/pdf" style="display: none;" />
+            </div>
+
+            <!-- Upload Progress Loader -->
+            <div id="upload-progress-container" class="upload-progress-container" style="display: none;">
+              <div class="spinner"></div>
+              <div class="progress-details">
+                <h4 id="progress-status-title">Uploading Document...</h4>
+                <p id="progress-status-desc">Initializing OCR parser & compliance check</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Uploaded Bids History -->
+          <div class="card vendor-history-card">
+            <div class="panel-header">
+              <h3>🕒 Session Audited Bids</h3>
+            </div>
+            <p class="section-desc">Select a past run to view its results:</p>
+            <div class="history-list" id="vendor-history-list">
+              <p style="color: var(--text-dim); font-size: 0.82rem; font-style: italic;">No bids uploaded in this session yet.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Audit Report & Feedback -->
+        <section class="content-panel right-panel">
+          <div class="card audit-report-card">
+            <div class="panel-header">
+              <h2>📋 Bid Compliance Audit Report</h2>
+              <span id="vendor-overall-badge" class="status-tag status-tag-large" style="display:none;"></span>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-report-state" id="empty-report-state">
+              <div class="empty-icon">📊</div>
+              <h3>No Report Generated</h3>
+              <p>Upload a bid document or select a sample from the history list to run verification.</p>
+            </div>
+
+            <!-- Report Content (Hidden Initially) -->
+            <div class="report-content-wrapper" id="report-content-wrapper" style="display: none;">
+              <div class="score-summary-box">
+                <div class="score-circle">
+                  <span class="score-val" id="vendor-score-val">0%</span>
+                  <span class="score-lbl">Overall Score</span>
+                </div>
+                <div class="status-info-box">
+                  <h3>Compliance Grade: <span id="vendor-status-grade">PENDING</span></h3>
+                  <p id="vendor-status-desc">Upload a PDF or select from list to update score details.</p>
+                </div>
+              </div>
+
+              <!-- Itemized Checks -->
+              <h4 style="margin: 1.5rem 0 0.5rem 0; font-size: 0.95rem;">Itemized Rule Checklist:</h4>
+              <div class="itemized-checklist-container" id="vendor-itemized-checklist">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Dynamic Recommendations Advisor -->
+              <h4 style="margin: 1.5rem 0 0.5rem 0; font-size: 0.95rem;">🛠️ Actionable Compliance Suggestions:</h4>
+              <div class="recommendations-container" id="vendor-recommendations">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Audit Modal -->
+  <div id="audit-modal" class="modal">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3 id="modal-vendor-title">Detailed Audit Breakdown</h3>
+        <span class="close-modal" id="close-modal">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-body-content">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Viewer Modal -->
+  <div id="email-modal" class="modal">
+    <div class="modal-content card" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3>✉️ Dispatched Selection Email Content</h3>
+        <span class="close-modal" id="close-email-modal">&times;</span>
+      </div>
+      <div class="modal-body" style="padding-top: 0.5rem;">
+        <pre id="email-modal-content" style="background: #030712; color: #cbd5e1; border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 10px; font-family: var(--font-mono); font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 420px; overflow-y: auto; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" class="modal-overlay" style="display: flex;">
+    <div class="auth-portal-container">
+      <!-- Left Panel: Platform Branding & Visuals -->
+      <div class="auth-branding">
+        <div class="auth-branding-logo">🛡️</div>
+        <h2>GeM G2B Audit Portal</h2>
+        <p class="auth-branding-sub">Integrated Government e-Marketplace gateway connecting Procurement Authorities and Registered Bidders through secure compliance scans.</p>
+        
+        <!-- Live GNN Visual Vector Graphic -->
+        <div class="auth-gnn-visual">
+          <svg width="100%" height="150" viewBox="0 0 300 150">
+            <!-- Interconnecting relationship paths -->
+            <line x1="60" y1="35" x2="150" y2="75" stroke="#38bdf8" stroke-dasharray="4,4" stroke-width="1.5">
+              <animate attributeName="stroke-dashoffset" values="40;0" dur="2.5s" repeatCount="indefinite" />
+            </line>
+            <line x1="240" y1="35" x2="150" y2="75" stroke="#38bdf8" stroke-dasharray="3,3" stroke-width="1">
+              <animate attributeName="stroke-dashoffset" values="0;30" dur="2s" repeatCount="indefinite" />
+            </line>
+            <line x1="60" y1="115" x2="150" y2="75" stroke="#c084fc" stroke-width="1.2" />
+            <line x1="240" y1="115" x2="150" y2="75" stroke="#f87171" stroke-width="1.5" />
+            
+            <!-- Nodes representing procurement entities -->
+            <circle cx="150" cy="75" r="17" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5" />
+            <text x="150" y="79" fill="#38bdf8" font-size="9" font-weight="900" text-anchor="middle" font-family="monospace">GNN</text>
+            
+            <circle cx="60" cy="35" r="7" fill="#38bdf8">
+              <animate attributeName="r" values="7;9;7" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="240" cy="35" r="6.5" fill="#34d399" />
+            <circle cx="60" cy="115" r="7" fill="#c084fc" />
+            <circle cx="240" cy="115" r="8" fill="#f87171">
+              <animate attributeName="fill" values="#f87171;#ef4444;#f87171" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+ 
+         <ul class="auth-feature-list">
+           <li><span class="feat-icon">🛡️</span> <strong>Authorities Workspace</strong>: Inspect compliance checklist & GNN collusion.</li>
+           <li><span class="feat-icon">💼</span> <strong>Vendors Workspace</strong>: Self-audit drafts & resolve warnings.</li>
+           <li><span class="feat-icon">🕸️</span> <strong>G2B Collusion Scan</strong>: Relational fraud mapping.</li>
+         </ul>
+       </div>
+ 
+       <!-- Right Panel: Interactive Form -->
+       <div class="auth-form-panel">
+         <div class="auth-tabs">
+           <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+           <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+         </div>
+         <div class="auth-body">
+           <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+             <!-- Segmented G2B Role Picker Cards -->
+             <div class="role-selector-wrapper" style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
+               <div class="role-card active" id="role-card-vendor" onclick="selectAuthRole('vendor')" style="flex: 1; border: 1px solid var(--accent-blue); background: rgba(37,99,235,0.05); padding: 0.75rem; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                 <span style="font-size: 1.4rem; display: block; margin-bottom: 0.25rem;">💼</span>
+                 <span style="font-size: 0.72rem; font-weight: 700; display: block; color: var(--text-main);">Vendor Representative</span>
+                 <span style="font-size: 0.58rem; color: var(--text-muted); display: block; margin-top: 0.1rem;">Submit Draft Bids</span>
+               </div>
+               <div class="role-card" id="role-card-government" onclick="selectAuthRole('government')" style="flex: 1; border: 1px solid var(--border-color); background: transparent; padding: 0.75rem; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                 <span style="font-size: 1.4rem; display: block; margin-bottom: 0.25rem;">🛡️</span>
+                 <span style="font-size: 0.72rem; font-weight: 700; display: block; color: var(--text-main);">Government Official</span>
+                 <span style="font-size: 0.58rem; color: var(--text-muted); display: block; margin-top: 0.1rem;">Audit Tender Clauses</span>
+               </div>
+             </div>
+ 
+             <!-- Username Input -->
+             <div class="form-group" id="form-group-username">
+               <div class="input-wrapper">
+                 <input type="text" id="auth-username" class="form-input" required placeholder=" " oninput="handleInputState(this)" onblur="handleInputState(this)" />
+                <label class="form-label" for="auth-username">Username</label>
+                <span class="input-icon">👤</span>
+              </div>
+            </div>
+            
+            <!-- Email Input -->
+            <div class="form-group" id="form-group-email" style="display: none;">
+              <div class="input-wrapper">
+                <input type="email" id="auth-email" class="form-input" placeholder=" " oninput="handleInputState(this)" onblur="handleInputState(this)" />
+                <label class="form-label" for="auth-email">Email Address</label>
+                <span class="input-icon">✉️</span>
+              </div>
+            </div>
+            
+            <!-- Password Input -->
+            <div class="form-group" id="form-group-password">
+              <div class="input-wrapper">
+                <input type="password" id="auth-password" class="form-input" required placeholder=" " oninput="handleInputState(this)" onblur="handleInputState(this)" />
+                <label class="form-label" for="auth-password">Password</label>
+                <span class="input-icon">🔒</span>
+                <span class="password-toggle" id="auth-password-toggle" onclick="togglePasswordVisibility()">👁️</span>
+              </div>
+            </div>
+            
+            <!-- Role Selection -->
+            <div class="form-group" id="form-group-role" style="display: none;">
+              <div class="input-wrapper">
+                <select id="auth-role" class="form-input select-input" onchange="toggleOrgGroup()">
+                  <option value="vendor">Vendor Representative</option>
+                  <option value="government">Government Official</option>
+                </select>
+                <label class="form-label select-label" for="auth-role">Role</label>
+                <span class="input-icon">💼</span>
+              </div>
+            </div>
+            
+            <!-- Org Name Input -->
+            <div class="form-group" id="form-group-org" style="display: none;">
+              <div class="input-wrapper">
+                <input type="text" id="auth-org" class="form-input" placeholder=" " oninput="handleInputState(this)" onblur="handleInputState(this)" />
+                <label class="form-label" for="auth-org">Organization Name</label>
+                <span class="input-icon">🏢</span>
+              </div>
+            </div>
+            
+            <div class="auth-error" id="auth-error-msg"></div>
+            
+            <button type="submit" id="btn-auth-submit" class="btn btn-primary btn-block">Sign In</button>
+          </form>
+
+          <!-- Quick Demo Accounts Auto-Selector -->
+          <div class="quick-selectors-container">
+            <p class="quick-selectors-title">⚡ Quick Credentials Selector</p>
+            <div class="quick-selectors-list">
+              <button type="button" class="quick-sel-btn gov" onclick="autofillCredentials('gov', 'gov123')">
+                <span class="badge-icon">🛡️</span> Gov Admin
+              </button>
+              <button type="button" class="quick-sel-btn vendor" onclick="autofillCredentials('vendor', 'vendor123')">
+                <span class="badge-icon">💼</span> TechCorp
+              </button>
+              <button type="button" class="quick-sel-btn vendor" onclick="autofillCredentials('cybertech', 'vendor123')">
+                <span class="badge-icon">💻</span> CyberTech
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acknowledgment Overlay -->
+  <div id="acknowledgment-overlay" class="modal-overlay" style="display: none;">
+    <div class="card ack-card">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--accent-blue);">⚖️ GeM Compliance Integrity Acknowledgment</h3>
+      </div>
+      <div class="ack-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">
+          Before accessing the Procurement Compliance Verification workspace, you must review and accept the system guidelines and data integrity pledge:
+        </p>
+        <div class="ack-checklist" style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem;">
+          <label class="ack-item" style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; cursor: pointer; color: var(--text-main);">
+            <input type="checkbox" id="ack-check-1" required style="margin-top: 0.15rem;" />
+            <span>I acknowledge that all automated OCR, NLP, and GNN compliance validations are simulated for security auditing purposes.</span>
+          </label>
+          <label class="ack-item" style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; cursor: pointer; color: var(--text-main);">
+            <input type="checkbox" id="ack-check-2" required style="margin-top: 0.15rem;" />
+            <span>I agree to verify all bidder credentials and original business records manually before awarding contract selections.</span>
+          </label>
+          <label class="ack-item" style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; cursor: pointer; color: var(--text-main);">
+            <input type="checkbox" id="ack-check-3" required style="margin-top: 0.15rem;" />
+            <span>I confirm that I have read the Procurement Guidelines and declare that I have no personal conflicts of interest with the bidded firms.</span>
+          </label>
+        </div>
+        <button id="btn-ack-accept" class="btn btn-primary btn-block" onclick="acceptAcknowledgment()">Agree & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GNN Graph Tooltip -->
+  <div id="gnn-tooltip" class="gnn-tooltip" style="opacity: 0;"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
